@@ -1,8 +1,17 @@
 const { expect } = require("@playwright/test");
 const { adminUser } = require("../fixtures/users");
+const { totpNow } = require("../helpers/totp");
 
 function getBaseUrl() {
   return process.env.E2E_BASE_URL || "http://localhost:8889/";
+}
+
+const totpSecrets = new Map();
+
+function cacheTotpSecret(username, secret) {
+  if (username && secret) {
+    totpSecrets.set(username, secret);
+  }
 }
 
 async function login(page, user = adminUser) {
@@ -18,6 +27,33 @@ async function login(page, user = adminUser) {
   await page.fill("#user_login", user.login);
   await page.fill("#user_pass", user.pass);
   await page.click("#wp-submit");
+
+  await page.waitForURL(/\/wp-admin\//, { timeout: 30000 }).catch(() => {});
+  if (page.url().includes("action=sucuri-2fa-setup")) {
+    await expect(
+      page.getByText("Set up Two-Factor Authentication"),
+    ).toBeVisible();
+    const secret = await extractSecretFromSetupPage(page);
+    const code = totpNow(secret);
+    cacheTotpSecret(user.login, secret);
+    await finishWithCode(page, code);
+    await expect(page).toHaveURL(/\/wp-admin\//);
+    return;
+  }
+
+  if (page.url().includes("action=sucuri-2fa")) {
+    const secret = totpSecrets.get(user.login);
+    if (!secret) {
+      throw new Error(
+        `No cached TOTP secret for ${user.login}; cannot complete 2FA verify.`,
+      );
+    }
+    const code = totpNow(secret);
+    await finishWithCode(page, code);
+    await expect(page).toHaveURL(/\/wp-admin\//);
+    return;
+  }
+
   await expect(page).toHaveURL(/\/wp-admin\//);
 }
 
@@ -65,6 +101,7 @@ async function extractSecretFromSetupPage(page) {
 }
 
 module.exports = {
+  cacheTotpSecret,
   login,
   loginExpecting2fa,
   finishWithCode,
