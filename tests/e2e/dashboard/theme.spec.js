@@ -7,7 +7,7 @@ test.describe("Dashboard Theme", () => {
   });
 
   test("Test Light Theme", async ({ page }) => {
-    await page.goto("wp-admin/admin.php?page=sucuriscan");
+    await page.goto("/wp-admin/admin.php?page=sucuriscan");
 
     await expect(page.locator(".unlock-premium ")).toBeVisible();
     await expect(page.locator(".sucuriscan-upgrade-banner ")).toBeVisible();
@@ -28,7 +28,7 @@ test.describe("Dashboard Theme", () => {
     await page.fill("[name=sucuriscan_cloudproxy_apikey]", fakeApiKey);
     await page.click("[data-cy=sucuriscan-save-wafkey]");
 
-    await page.goto("wp-admin/admin.php?page=sucuriscan");
+    await page.goto("/wp-admin/admin.php?page=sucuriscan");
 
     await expect(page.locator(".unlock-premium ")).not.toBeVisible();
     await expect(page.locator(".sucuriscan-upgrade-banner ")).not.toBeVisible();

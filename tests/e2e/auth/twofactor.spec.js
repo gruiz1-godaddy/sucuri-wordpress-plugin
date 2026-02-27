@@ -76,6 +76,7 @@ async function resetForSelectedUsers(page, users) {
 }
 
 async function completeSetupWithGeneratedCode(page) {
+  await expect(page.locator("code").first()).toBeVisible();
   const secret = await extractSecretFromSetupPage(page);
   const code = totpNow(secret);
   expect(code).toMatch(/^\d{6}$/);
@@ -84,7 +85,7 @@ async function completeSetupWithGeneratedCode(page) {
   return secret;
 }
 
-test.describe("Two-Factor Authentication", () => {
+test.describe.serial("Two-Factor Authentication", () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
   });

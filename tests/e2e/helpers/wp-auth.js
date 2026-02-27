@@ -3,6 +3,13 @@ const { adminUser } = require("../fixtures/users");
 
 async function login(page, user = adminUser) {
   await page.context().clearCookies();
+  await page.context().addCookies([
+    {
+      name: "sucuriscan_waf_dismissed",
+      value: "1",
+      url: page.url() || "http://localhost:8889/",
+    },
+  ]);
   await page.goto("/wp-login.php");
   await page.fill("#user_login", user.login);
   await page.fill("#user_pass", user.pass);
@@ -18,6 +25,13 @@ async function loginExpecting2fa(
 ) {
   if (fresh) {
     await page.context().clearCookies();
+    await page.context().addCookies([
+      {
+        name: "sucuriscan_waf_dismissed",
+        value: "1",
+        url: page.url() || "http://localhost:8889/",
+      },
+    ]);
   }
 
   await page.goto("/wp-login.php");
