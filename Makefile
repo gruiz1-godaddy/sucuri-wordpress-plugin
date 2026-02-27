@@ -1,8 +1,8 @@
 #!/bin/sh
 
-.PHONY: e2e e2e-prepare e2e-scanner e2e-firewall unit-test update-translations
+.PHONY: e2e e2e-prepare e2e-playwright e2e-scanner e2e-firewall unit-test update-translations
 
-e2e: e2e-prepare e2e-scanner e2e-firewall
+e2e: e2e-prepare e2e-playwright
 
 e2e-prepare:
 	npx wp-env start
@@ -15,6 +15,9 @@ e2e-scanner:
 
 e2e-firewall:
 	npx cypress run --spec cypress/e2e/sucuri-scanner-firewall.cy.js
+
+e2e-playwright:
+	npm run test:e2e:playwright
 
 unit-test:
 	./vendor/bin/phpunit

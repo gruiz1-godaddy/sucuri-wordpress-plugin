@@ -4,6 +4,10 @@ vendor
 cypress/videos
 cypress/screenshots
 
+playwright-report
+test-results
+.playwright
+
 cypress.config.js
 .wp-env.override.json
 
