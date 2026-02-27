@@ -1,13 +1,17 @@
 const { expect } = require("@playwright/test");
 const { adminUser } = require("../fixtures/users");
 
+function getBaseUrl() {
+  return process.env.E2E_BASE_URL || "http://localhost:8889/";
+}
+
 async function login(page, user = adminUser) {
   await page.context().clearCookies();
   await page.context().addCookies([
     {
       name: "sucuriscan_waf_dismissed",
       value: "1",
-      url: page.url() || "http://localhost:8889/",
+      url: getBaseUrl(),
     },
   ]);
   await page.goto("/wp-login.php");
@@ -29,7 +33,7 @@ async function loginExpecting2fa(
       {
         name: "sucuriscan_waf_dismissed",
         value: "1",
-        url: page.url() || "http://localhost:8889/",
+        url: getBaseUrl(),
       },
     ]);
   }
