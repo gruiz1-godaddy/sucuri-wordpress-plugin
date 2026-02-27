@@ -6,7 +6,7 @@ module.exports = defineConfig({
   expect: {
     timeout: 30000,
   },
-  retries: process.env.CI ? 3 : 0,
+  retries: 0,
   use: {
     baseURL: process.env.E2E_BASE_URL || "http://localhost:8889/",
     trace: "retain-on-failure",
