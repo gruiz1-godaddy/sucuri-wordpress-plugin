@@ -5,7 +5,6 @@ const {
   loginExpecting2fa,
   finishWithCode,
   extractSecretFromSetupPage,
-  cacheTotpSecret,
 } = require("../helpers/wp-auth");
 const { totpNow } = require("../helpers/totp");
 
@@ -76,12 +75,11 @@ async function resetForSelectedUsers(page, users) {
   );
 }
 
-async function completeSetupWithGeneratedCode(page, userLogin) {
+async function completeSetupWithGeneratedCode(page) {
   await expect(page.locator("code").first()).toBeVisible();
   const secret = await extractSecretFromSetupPage(page);
   const code = totpNow(secret);
   expect(code).toMatch(/^\d{6}$/);
-  cacheTotpSecret(userLogin, secret);
   await finishWithCode(page, code);
   await expect(page).toHaveURL(/\/wp-admin\//);
   return secret;
@@ -112,7 +110,7 @@ test.describe.serial("Two-Factor Authentication", () => {
     );
 
     await loginExpecting2fa(page, testAdminUser, "setup");
-    await completeSetupWithGeneratedCode(page, testAdminUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await loginExpecting2fa(page, testAdminUser, "verify");
     await loginExpecting2fa(page, extraUser, "setup");
@@ -132,7 +130,7 @@ test.describe.serial("Two-Factor Authentication", () => {
     await setModeSelectedUsersFor(page, [extraUser]);
 
     await loginExpecting2fa(page, extraUser, "setup");
-    await completeSetupWithGeneratedCode(page, extraUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await loginExpecting2fa(page, extraUser, "verify");
     await finishWithCode(page, "000000");
@@ -154,7 +152,7 @@ test.describe.serial("Two-Factor Authentication", () => {
     await setModeSelectedUsersFor(page, [extraUser], "activate_selected");
 
     await loginExpecting2fa(page, extraUser, "setup");
-    await completeSetupWithGeneratedCode(page, extraUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await page.goto("/wp-admin/profile.php");
     await expect(
@@ -190,10 +188,10 @@ test.describe.serial("Two-Factor Authentication", () => {
     );
 
     await loginExpecting2fa(page, extraUser, "setup");
-    await completeSetupWithGeneratedCode(page, testAdminUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await loginExpecting2fa(page, testAdminUser, "setup");
-    await completeSetupWithGeneratedCode(page, testAdminUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await login(page);
 
@@ -241,7 +239,7 @@ test.describe.serial("Two-Factor Authentication", () => {
 
     await loginExpecting2fa(page, adminUser, "verify");
 
-    await completeSetupWithGeneratedCode(page, adminUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await setModeAllUsers(page, "deactivate_all");
     await resetForSelectedUsers(page, [adminUser]);
@@ -315,10 +313,10 @@ test.describe.serial("Two-Factor Authentication", () => {
     await setModeAllUsers(page);
 
     await loginExpecting2fa(page, testAdminUser, "setup");
-    await completeSetupWithGeneratedCode(page, testAdminUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await loginExpecting2fa(page, extraUser, "setup");
-    await completeSetupWithGeneratedCode(page, extraUser.login);
+    await completeSetupWithGeneratedCode(page);
 
     await login(page);
     await go2faPage(page);
