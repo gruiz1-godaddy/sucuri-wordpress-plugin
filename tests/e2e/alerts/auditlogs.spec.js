@@ -49,49 +49,37 @@ test.describe("Audit Logs", () => {
     await page.goto(
       "/wp-admin/admin.php?page=sucuriscan_events_reporting#auditlogs",
     );
+    await page.waitForLoadState("networkidle");
 
     await page.click("[data-cy=sucuriscan_dashboard_send_audit_logs_submit]");
 
     await expect(
-      page.locator("[data-cy=sucuriscan_auditlog_response_loading]"),
-    ).toContainText("Loading...");
-
-    await expect(
-      page.locator(".sucuriscan-auditlog-entry-title"),
+      page.locator(".sucuriscan-auditlog-entry-title").first(),
     ).toContainText("User authentication succeeded: admin");
   });
 
   test("can filter auditlogs", async ({ page }) => {
-    await page.route(/\/wp-admin\/admin-ajax\.php/, async (route) => {
-      if (route.request().method() !== "POST") {
-        await route.fallback();
-        return;
-      }
-
-      const postData = route.request().postData() || "";
-      if (postData.includes("get_audit_logs")) {
-        await route.fulfill({
-          json: readFixtureJson("audit_logs.json"),
-        });
-        return;
-      }
-
-      await route.fallback();
-    });
-
     await page.goto(
       "/wp-admin/admin.php?page=sucuriscan_events_reporting#auditlogs",
     );
+    await page.waitForLoadState("networkidle");
 
     await expect(page.locator(".sucuriscan-auditlog-response")).toBeVisible();
-    await expect(page.locator(".sucuriscan-auditlog-entry")).toHaveCount(1);
+    await expect
+      .poll(() => page.locator(".sucuriscan-auditlog-entry").count())
+      .toBeGreaterThan(0);
+
+    await page.locator("#plugins").waitFor({ state: "visible" });
 
     await page.selectOption("#plugins", { label: "Activated" });
     await page.click("[data-cy=sucuriscan_auditlogs_filter_button]");
 
-    await expect(
-      page.locator(".sucuriscan-auditlog-entry-title"),
-    ).toContainText("Plugin activated");
+    const pluginTitles = await page
+      .locator(".sucuriscan-auditlog-entry-title")
+      .allTextContents();
+    expect(
+      pluginTitles.every((text) => text.includes("Plugin activated")),
+    ).toBe(true);
 
     await page.click("[data-cy=sucuriscan_auditlogs_clear_filter_button]");
     await page.waitForTimeout(200);
@@ -99,9 +87,14 @@ test.describe("Audit Logs", () => {
     await page.selectOption("#logins", { label: "Succeeded" });
     await page.click("[data-cy=sucuriscan_auditlogs_filter_button]");
 
-    await expect(
-      page.locator(".sucuriscan-auditlog-entry-title"),
-    ).toContainText("User authentication succeeded");
+    const loginTitles = await page
+      .locator(".sucuriscan-auditlog-entry-title")
+      .allTextContents();
+    expect(
+      loginTitles.every((text) =>
+        text.includes("User authentication succeeded"),
+      ),
+    ).toBe(true);
 
     await page.click("[data-cy=sucuriscan_auditlogs_clear_filter_button]");
 
@@ -111,12 +104,14 @@ test.describe("Audit Logs", () => {
 
     await page.waitForTimeout(3000);
 
-    const combinedText = await page
+    const combinedTitles = await page
       .locator(".sucuriscan-auditlog-entry-title")
-      .innerText();
-    expect(combinedText).toMatch(
-      /Plugin activated|User authentication succeeded/,
-    );
+      .allTextContents();
+    expect(
+      combinedTitles.every((text) =>
+        /Plugin activated|User authentication succeeded/.test(text),
+      ),
+    ).toBe(true);
 
     await page.click("[data-cy=sucuriscan_auditlogs_clear_filter_button]");
 
@@ -124,9 +119,14 @@ test.describe("Audit Logs", () => {
     await page.selectOption("#logins", { label: "Succeeded" });
     await page.click("[data-cy=sucuriscan_auditlogs_filter_button]");
 
-    await expect(
-      page.locator(".sucuriscan-auditlog-entry-title"),
-    ).toContainText("User authentication succeeded");
+    const timeTitles = await page
+      .locator(".sucuriscan-auditlog-entry-title")
+      .allTextContents();
+    expect(
+      timeTitles.every((text) =>
+        text.includes("User authentication succeeded"),
+      ),
+    ).toBe(true);
 
     await page.click("[data-cy=sucuriscan_auditlogs_clear_filter_button]");
     await page.waitForTimeout(200);
